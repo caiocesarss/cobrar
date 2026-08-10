@@ -365,14 +365,33 @@ async function postAcao(payload) {
 function gerarTexto() {
   if (!statusAtual) { mostrarMsg('Status ainda nao carregado.', 'err'); return; }
   const s = statusAtual;
-  let texto = 'CUB ' + s.mesNome + ' ' + s.ano + ': R$ ' + fmt(s.cub) + '\n';
-  texto += fmtIdx(s.indice) + ' * ' + fmt(s.cub) + ' = R$ ' + fmt(s.mult) + '\n';
-  texto += '(+) SALDO NEGATIVO ANTERIOR R$ ' + fmt(s.saldoAnterior) + '\n';
-  texto += 'TOTAL DO MES R$ ' + fmt(s.totalMes) + '\n';
-  s.pagamentos.forEach(p => {
-    texto += '(-) ' + fmt(p.valor) + ' PIX ' + p.dataTexto + '\n';
-  });
-  texto += '(=) A PAGAR R$ ' + fmt(s.aPagar);
+
+  let texto = '';
+  texto += '📋 *Atualicação da Parcela*\n';
+  texto += '🗓️ Mes de referencia: ' + s.mesNome + '/' + s.ano + '\n\n';
+
+  texto += '💰 *Calculo da parcela*\n';
+  texto += 'Indice: ' + fmtIdx(s.indice) + '\n';
+  texto += 'CUB do mes: R$ ' + fmt(s.cub) + '\n';
+  texto += 'Valor corrigido: *R$ ' + fmt(s.mult) + '*\n\n';
+
+  texto += '📊 *Resumo financeiro*\n';
+  texto += 'Saldo anterior: R$ ' + fmt(s.saldoAnterior) + '\n';
+  texto += 'Total do mes: R$ ' + fmt(s.totalMes) + '\n';
+  texto += '*Total devido: R$ ' + fmt(s.saldoAnterior + s.totalMes) + '*\n\n';
+
+  if (s.pagamentos.length) {
+    texto += '✅ *Pagamentos recebidos*\n';
+    let totalPago = 0;
+    s.pagamentos.forEach(p => {
+      texto += p.dataTexto + (p.nome ? ' - ' + p.nome : '') + ' - R$ ' + fmt(p.valor) + '\n';
+      totalPago += Number(p.valor);
+    });
+    texto += '*Total pago: R$ ' + fmt(totalPago) + '*\n\n';
+  }
+
+  texto += '🔴 *Valor a pagar: R$ ' + fmt(s.aPagar) + '*\n\n';
+  texto += 'Qualquer duvida, e so chamar! 🙏';
 
   document.getElementById('receiptText').innerText = texto;
   document.getElementById('receiptWrap').classList.remove('hidden');
