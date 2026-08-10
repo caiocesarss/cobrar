@@ -362,36 +362,40 @@ async function postAcao(payload) {
   }
 }
 
-// alinha "label" + "valor" em colunas fixas, tipo recibo monoespacado
-// moeda sem espaco entre "R$" e o numero, para o WhatsApp
-// nunca quebrar a linha bem no meio do valor
+// formata o valor; para negativos o toLocaleString ja inclui o sinal "-"
 function money(v) {
-  return 'R$' + fmt(v);
+  return fmt(v);
 }
-function linhaFmt(label, valor) {
-  return label + ': ' + valor + '\n';
+// preenche com pontos ate uma largura fixa, sem nenhum espaco no meio
+// (label+pontos+valor vira uma unica "palavra" para o WhatsApp, entao
+// ele so quebra a linha inteira, nunca corta o valor no meio)
+function linhaFmt(label, valor, largura) {
+  largura = largura || 20;
+  let pontos = largura - label.length - valor.length;
+  if (pontos < 2) pontos = 2;
+  return label + '.'.repeat(pontos) + valor + '\n';
 }
 
 function gerarTexto() {
   if (!statusAtual) { mostrarMsg('Status ainda nao carregado.', 'err'); return; }
   const s = statusAtual;
 
-  // dentro de um bloco ``` o WhatsApp usa fonte monoespacada (Courier),
-  // mas o bubble no celular e estreito - por isso sem colunas com pontos
-  // e sem espaco dentro do valor, so quebra entre linhas inteiras.
+  // dentro de um bloco ``` o WhatsApp usa fonte monoespacada (Courier).
+  // o bubble no celular so comporta ~20 caracteres por linha sem quebrar,
+  // por isso os rotulos sao curtos e cada linha fica dentro desse limite.
   let texto = '```\n';
   texto += '📋 ATUALIZAÇÃO DE VALORES\n';
   texto += 'Mês: ' + s.mesNome + '/' + s.ano + '\n\n';
 
   texto += '💰 CÁLCULO DA PARCELA\n';
   texto += linhaFmt('Índice', fmtIdx(s.indice));
-  texto += linhaFmt('CUB do mês', money(s.cub));
-  texto += linhaFmt('Corrigido', money(s.mult));
+  texto += linhaFmt('CUB', money(s.cub));
+  texto += linhaFmt('Parcela', money(s.mult));
   texto += '\n';
 
   texto += '📊 RESUMO FINANCEIRO\n';
-  texto += linhaFmt('Saldo anterior', money(s.saldoAnterior));
-  texto += linhaFmt('Total devido', money(s.totalMes));
+  texto += linhaFmt('Saldo', money(s.saldoAnterior));
+  texto += linhaFmt('Devido', money(s.totalMes));
   texto += '\n';
 
   if (s.pagamentos.length) {
@@ -402,13 +406,14 @@ function gerarTexto() {
       texto += linhaFmt(rotulo, money(p.valor));
       totalPago += Number(p.valor);
     });
-    texto += linhaFmt('Total pago', money(totalPago));
+    texto += linhaFmt('Pago', money(totalPago));
     texto += '\n';
   }
 
-  texto += '🔴 A PAGAR: ' + money(s.aPagar) + '\n';
+  texto += '🔴 A PAGAR\n';
+  texto += money(s.aPagar) + '\n';
   texto += '```\n';
-  texto += 'Qualquer duvida, só chamar! 🙏';
+  texto += 'Qualquer dúvida, é só chamar! 🙏';
 
   document.getElementById('receiptText').innerText = texto;
   document.getElementById('receiptWrap').classList.remove('hidden');
