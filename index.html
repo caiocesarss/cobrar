@@ -284,6 +284,8 @@ async function carregarStatus() {
     html += linha('Total do mes', 'R$ ' + fmt(data.totalMes));
     html += linha('Ja pago', 'R$ ' + fmt(data.totalPago));
     html += linha('A pagar', 'R$ ' + fmt(data.aPagar), true);
+    html += linha('Total vencido (geral)', 'R$ ' + fmt(data.totalCorrigidoGeral));
+    html += linha('Total pago (geral)', 'R$ ' + fmt(data.totalTransferidoGeral));
     if (data.pagamentos.length) {
       html += '<div class="pagamentos-list">';
       data.pagamentos.forEach(p => {

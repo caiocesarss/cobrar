@@ -133,6 +133,16 @@ function calcularStatusAtual_() {
   const totalMes = mult + saldoAnterior;
   const aPagar = totalMes - totalPago;
 
+  // Somas de coluna inteira (todas as linhas da planilha, nao so do mes atual)
+  let totalCorrigidoGeral = 0;
+  let totalTransferidoGeral = 0;
+  for (let i = 0; i < valores.length; i++) {
+    const corrigido = valores[i][COL.CORRIGIDO];
+    if (typeof corrigido === 'number') totalCorrigidoGeral += corrigido;
+    const transferido = valores[i][COL.TRANSFERIDO];
+    if (typeof transferido === 'number') totalTransferidoGeral += transferido;
+  }
+
   return {
     linhaMes: linhaMes + 1,
     proximaLinhaLivre: proximaLinhaMes + 1,
@@ -145,7 +155,9 @@ function calcularStatusAtual_() {
     totalMes: totalMes,
     pagamentos: pagamentos,
     totalPago: totalPago,
-    aPagar: aPagar
+    aPagar: aPagar,
+    totalCorrigidoGeral: totalCorrigidoGeral,
+    totalTransferidoGeral: totalTransferidoGeral
   };
 }
 
