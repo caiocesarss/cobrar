@@ -149,28 +149,29 @@ function calcularStatusAtual_() {
   };
 }
 
-/** GET /exec?senha=... -> retorna o status atual (mes mais recente + pagamentos). */
-function doGet(e) {
-  const senha = e.parameter.senha || '';
-  if (!senhaValida_(senha)) {
-    return ContentService.createTextOutput(JSON.stringify({ erro: 'Senha incorreta.' }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-  const status = calcularStatusAtual_();
-  return ContentService.createTextOutput(JSON.stringify(status))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
 /**
  * POST /exec -> recebe JSON como texto puro (evita CORS preflight):
+ * { action: "getStatus" }
  * { action: "addPagamento", valor: 65.00, data: "2026-08-10", nome: "Fulano" }
  * { action: "addMes", data: "2026-09-28", valorParcela: 10000, indice: 3.6301, cub: 3200.50 }
+ *
+ * Nota de seguranca: a senha so trafega dentro do corpo (body) do POST,
+ * nunca como parametro de URL (?senha=...). Query strings ficam gravadas
+ * no historico do navegador e nos logs de execucao do Apps Script, entao
+ * o doGet antigo foi removido de proposito - nao reintroduza a senha
+ * na URL.
  */
 function doPost(e) {
   const body = JSON.parse(e.postData.contents);
 
   if (!senhaValida_(body.senha || '')) {
     return ContentService.createTextOutput(JSON.stringify({ erro: 'Senha incorreta.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (body.action === 'getStatus') {
+    const status = calcularStatusAtual_();
+    return ContentService.createTextOutput(JSON.stringify(status))
       .setMimeType(ContentService.MimeType.JSON);
   }
 

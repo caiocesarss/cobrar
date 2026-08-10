@@ -260,7 +260,11 @@ async function carregarStatus() {
   const body = document.getElementById('statusBody');
   try {
     const senha = getSenha();
-    const resp = await fetch(API_URL + '?senha=' + encodeURIComponent(senha));
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS
+      body: JSON.stringify({ action: 'getStatus', senha: senha })
+    });
     const data = await resp.json();
     if (data.erro) {
       if (data.erro.includes('Senha')) sessionStorage.removeItem('cub_senha');
