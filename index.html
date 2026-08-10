@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cobranca CUB</title>
+<style>
+  :root {
+    --paper: #f2ede2;
+    --paper-line: #d8cfba;
+    --ink: #2a2620;
+    --ink-soft: #6b6455;
+    --accent: #3d6b52;
+    --accent-soft: #e4ede8;
+    --danger: #a3432f;
+    --bg: #14120f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 80px;
+  }
+  .wrap { width: 100%; max-width: 480px; }
+  header { text-align: center; margin-bottom: 24px; }
+  header .eyebrow {
+    color: #a89c82;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  header h1 {
+    color: #f2ede2;
+    font-size: 24px;
+    margin: 6px 0 0;
+    font-weight: 700;
+  }
+
+  .card {
+    background: var(--paper);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.35);
+    position: relative;
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: repeating-linear-gradient(90deg, var(--ink) 0 8px, transparent 8px 16px);
+    opacity: .15;
+  }
+  .card h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+    font-weight: 700;
+  }
+
+  .status-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--paper-line);
+    font-size: 14px;
+  }
+  .status-line:last-child { border-bottom: none; }
+  .status-line .label { color: var(--ink-soft); }
+  .status-line .value { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .status-line.total .value { color: var(--danger); font-size: 16px; }
+
+  .pagamentos-list { margin-top: 10px; }
+  .pagamentos-list .item {
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    color: var(--ink-soft);
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin: 12px 0 4px;
+  }
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--paper-line);
+    border-radius: 4px;
+    background: #fff;
+    font-size: 15px;
+    color: var(--ink);
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: .02em;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-secondary { background: var(--accent-soft); color: var(--accent); }
+  .btn-copy { background: var(--ink); color: var(--paper); }
+
+  .receipt {
+    font-family: "SF Mono", "Courier New", monospace;
+    font-size: 13.5px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    background: #fff;
+    border: 1px solid var(--paper-line);
+    border-radius: 4px;
+    padding: 14px;
+    margin-top: 10px;
+    user-select: all;
+  }
+
+  .msg { font-size: 12px; margin-top: 8px; }
+  .msg.ok { color: var(--accent); }
+  .msg.err { color: var(--danger); }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 4px; }
+  .tabs button {
+    margin-top: 0;
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--paper-line);
+    color: var(--ink-soft);
+    font-size: 12px;
+    padding: 8px;
+  }
+  .tabs button.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .hidden { display: none; }
+
+  .config-note {
+    font-size: 12px;
+    color: #a89c82;
+    text-align: center;
+    margin-top: 24px;
+    line-height: 1.6;
+  }
+  .config-note code { color: #d8cfba; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Controle mensal</div>
+    <h1>Cobranca CUB</h1>
+  </header>
+
+  <div class="card" id="cardStatus">
+    <h2>Status do mes atual</h2>
+    <div id="statusBody">Carregando...</div>
+  </div>
+
+  <div class="card">
+    <h2>Registrar</h2>
+    <div class="tabs">
+      <button id="tabPix" class="active">Novo PIX</button>
+      <button id="tabMes">Novo mes</button>
+    </div>
+
+    <div id="formPix">
+      <label for="pixValor">Valor (R$)</label>
+      <input type="number" step="0.01" id="pixValor" placeholder="65.00">
+      <label for="pixData">Data do pagamento</label>
+      <input type="date" id="pixData">
+      <label for="pixNome">Pago por (opcional)</label>
+      <input type="text" id="pixNome" placeholder="Nome">
+      <button class="btn-primary" onclick="enviarPagamento()">Adicionar PIX</button>
+    </div>
+
+    <div id="formMes" class="hidden">
+      <label for="mesData">Data de referencia do mes</label>
+      <input type="date" id="mesData">
+      <div class="row2">
+        <div>
+          <label for="mesIndice">Indice</label>
+          <input type="number" step="0.0001" id="mesIndice" placeholder="3.6301">
+        </div>
+        <div>
+          <label for="mesCub">Valor CUB</label>
+          <input type="number" step="0.01" id="mesCub" placeholder="3151.24">
+        </div>
+      </div>
+      <label for="mesParcela">Valor parcela</label>
+      <input type="number" step="0.01" id="mesParcela" placeholder="10000">
+      <button class="btn-primary" onclick="enviarMes()">Adicionar mes</button>
+    </div>
+
+    <div id="msgArea"></div>
+  </div>
+
+  <div class="card">
+    <h2>Texto para WhatsApp</h2>
+    <button class="btn-secondary" onclick="gerarTexto()">Gerar texto</button>
+    <div id="receiptWrap" class="hidden">
+      <div class="receipt" id="receiptText"></div>
+      <button class="btn-copy" onclick="copiarTexto()">Copiar</button>
+      <div class="msg" id="copyMsg"></div>
+    </div>
+  </div>
+
+  <div class="config-note">
+    Configure a URL do Apps Script na constante <code>API_URL</code>
+    dentro deste arquivo antes de publicar.
+  </div>
+</div>
+
+<script>
+// ==== CONFIGURACAO ====
+// Cole aqui a URL do seu Apps Script Web App (termina em /exec)
+const API_URL = "COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT";
+
+let statusAtual = null;
+
+function getSenha() {
+  let senha = sessionStorage.getItem('cub_senha');
+  while (!senha) {
+    senha = prompt('Digite a senha de acesso:');
+    if (senha) sessionStorage.setItem('cub_senha', senha);
+  }
+  return senha;
+}
+
+function fmt(v) {
+  return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtIdx(v) {
+  return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+}
+function mostrarMsg(texto, tipo) {
+  const el = document.getElementById('msgArea');
+  el.innerHTML = '<div class="msg ' + tipo + '">' + texto + '</div>';
+  setTimeout(() => { el.innerHTML = ''; }, 4000);
+}
+
+async function carregarStatus() {
+  const body = document.getElementById('statusBody');
+  try {
+    const senha = getSenha();
+    const resp = await fetch(API_URL + '?senha=' + encodeURIComponent(senha));
+    const data = await resp.json();
+    if (data.erro) {
+      if (data.erro.includes('Senha')) sessionStorage.removeItem('cub_senha');
+      body.innerHTML = '<div class="msg err">' + data.erro + ' Recarregue a pagina para tentar de novo.</div>';
+      return;
+    }
+    statusAtual = data;
+    let html = '';
+    html += linha('Mes', data.mesNome + ' ' + data.ano);
+    html += linha('CUB', 'R$ ' + fmt(data.cub));
+    html += linha('Indice', fmtIdx(data.indice));
+    html += linha('Saldo anterior', 'R$ ' + fmt(data.saldoAnterior));
+    html += linha('Total do mes', 'R$ ' + fmt(data.totalMes));
+    html += linha('Ja pago', 'R$ ' + fmt(data.totalPago));
+    html += linha('A pagar', 'R$ ' + fmt(data.aPagar), true);
+    if (data.pagamentos.length) {
+      html += '<div class="pagamentos-list">';
+      data.pagamentos.forEach(p => {
+        html += '<div class="item"><span>' + p.dataTexto + (p.nome ? ' - ' + p.nome : '') + '</span><span>R$ ' + fmt(p.valor) + '</span></div>';
+      });
+      html += '</div>';
+    }
+    body.innerHTML = html;
+  } catch (err) {
+    body.innerHTML = '<div class="msg err">Nao foi possivel carregar. Confira a URL da API.</div>';
+  }
+}
+
+function linha(label, valor, total) {
+  return '<div class="status-line' + (total ? ' total' : '') + '"><span class="label">' + label + '</span><span class="value">' + valor + '</span></div>';
+}
+
+document.getElementById('tabPix').onclick = () => alternarTab('pix');
+document.getElementById('tabMes').onclick = () => alternarTab('mes');
+function alternarTab(qual) {
+  document.getElementById('formPix').classList.toggle('hidden', qual !== 'pix');
+  document.getElementById('formMes').classList.toggle('hidden', qual !== 'mes');
+  document.getElementById('tabPix').classList.toggle('active', qual === 'pix');
+  document.getElementById('tabMes').classList.toggle('active', qual === 'mes');
+}
+
+async function enviarPagamento() {
+  const valor = document.getElementById('pixValor').value;
+  const data = document.getElementById('pixData').value;
+  const nome = document.getElementById('pixNome').value;
+  if (!valor || !data) { mostrarMsg('Preencha valor e data.', 'err'); return; }
+  await postAcao({ action: 'addPagamento', valor: valor, data: data, nome: nome });
+}
+
+async function enviarMes() {
+  const data = document.getElementById('mesData').value;
+  const indice = document.getElementById('mesIndice').value;
+  const cub = document.getElementById('mesCub').value;
+  const valorParcela = document.getElementById('mesParcela').value;
+  if (!data || !indice || !cub) { mostrarMsg('Preencha data, indice e CUB.', 'err'); return; }
+  await postAcao({ action: 'addMes', data: data, indice: indice, cub: cub, valorParcela: valorParcela });
+}
+
+async function postAcao(payload) {
+  try {
+    payload.senha = getSenha();
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    if (data.erro) {
+      if (data.erro.includes('Senha')) sessionStorage.removeItem('cub_senha');
+      mostrarMsg(data.erro, 'err');
+      return;
+    }
+    mostrarMsg('Salvo com sucesso.', 'ok');
+    statusAtual = data.status;
+    carregarStatus();
+    document.getElementById('receiptWrap').classList.add('hidden');
+  } catch (err) {
+    mostrarMsg('Erro ao salvar. Confira a URL da API.', 'err');
+  }
+}
+
+function gerarTexto() {
+  if (!statusAtual) { mostrarMsg('Status ainda nao carregado.', 'err'); return; }
+  const s = statusAtual;
+  let texto = 'CUB ' + s.mesNome + ' ' + s.ano + ': R$ ' + fmt(s.cub) + '\n';
+  texto += fmtIdx(s.indice) + ' * ' + fmt(s.cub) + ' = R$ ' + fmt(s.mult) + '\n';
+  texto += '(+) SALDO NEGATIVO ANTERIOR R$ ' + fmt(s.saldoAnterior) + '\n';
+  texto += 'TOTAL DO MES R$ ' + fmt(s.totalMes) + '\n';
+  s.pagamentos.forEach(p => {
+    texto += '(-) ' + fmt(p.valor) + ' PIX ' + p.dataTexto + '\n';
+  });
+  texto += '(=) A PAGAR R$ ' + fmt(s.aPagar);
+
+  document.getElementById('receiptText').innerText = texto;
+  document.getElementById('receiptWrap').classList.remove('hidden');
+}
+
+async function copiarTexto() {
+  const texto = document.getElementById('receiptText').innerText;
+  const msg = document.getElementById('copyMsg');
+  try {
+    await navigator.clipboard.writeText(texto);
+    msg.textContent = 'Copiado!';
+    msg.className = 'msg ok';
+  } catch (err) {
+    // fallback: seleciona o texto para copia manual (funciona bem no mobile)
+    const range = document.createRange();
+    range.selectNode(document.getElementById('receiptText'));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    msg.textContent = 'Texto selecionado - toque e segure para copiar.';
+    msg.className = 'msg ok';
+  }
+  setTimeout(() => { msg.textContent = ''; }, 3000);
+}
+
+carregarStatus();
+</script>
+</body>
+</html>
