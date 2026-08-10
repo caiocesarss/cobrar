@@ -105,6 +105,7 @@
     color: var(--ink);
   }
   input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  input[readonly] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
@@ -196,18 +197,13 @@
     <div id="formMes" class="hidden">
       <label for="mesData">Data de referencia do mes</label>
       <input type="date" id="mesData">
-      <div class="row2">
-        <div>
-          <label for="mesIndice">Indice</label>
-          <input type="number" step="0.0001" id="mesIndice" placeholder="3.6301">
-        </div>
-        <div>
-          <label for="mesCub">Valor CUB</label>
-          <input type="number" step="0.01" id="mesCub" placeholder="3151.24">
-        </div>
-      </div>
-      <label for="mesParcela">Valor parcela</label>
-      <input type="number" step="0.01" id="mesParcela" placeholder="10000">
+      <label for="mesIndiceDisplay">Indice (fixo)</label>
+      <input type="text" id="mesIndiceDisplay" readonly>
+      <label for="mesCub">Valor do CUB do mes</label>
+      <input type="number" step="0.01" id="mesCub" placeholder="3151.24">
+      <button class="btn-secondary" onclick="calcularParcela()">Calcular</button>
+      <label for="mesParcelaDisplay">Valor da parcela (calculado)</label>
+      <input type="text" id="mesParcelaDisplay" readonly placeholder="Clique em Calcular">
       <button class="btn-primary" onclick="enviarMes()">Adicionar mes</button>
     </div>
 
@@ -236,6 +232,8 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbyoMhTgwvW_FvwwGXKg115Br-fcs4zdyf33_Xz6YI9ObGpqfO0aahWAGhO2aSIRKwo2/exec";
 
 let statusAtual = null;
+let indiceFixo = null;
+let parcelaCalculada = null;
 
 function getSenha() {
   let senha = sessionStorage.getItem('cub_senha');
@@ -270,6 +268,10 @@ async function carregarStatus() {
       return;
     }
     statusAtual = data;
+    indiceFixo = data.indice;
+    const indiceDisplayEl = document.getElementById('mesIndiceDisplay');
+    if (indiceDisplayEl) indiceDisplayEl.value = fmtIdx(data.indice);
+
     let html = '';
     html += linha('Mes', data.mesNome + ' ' + data.ano);
     html += linha('CUB', 'R$ ' + fmt(data.cub));
@@ -312,13 +314,23 @@ async function enviarPagamento() {
   await postAcao({ action: 'addPagamento', valor: valor, data: data, nome: nome });
 }
 
+function calcularParcela() {
+  const cub = parseFloat(document.getElementById('mesCub').value);
+  if (!indiceFixo) { mostrarMsg('Indice ainda nao carregado. Aguarde o status carregar.', 'err'); return; }
+  if (!cub || cub <= 0) { mostrarMsg('Informe o valor do CUB do mes.', 'err'); return; }
+  parcelaCalculada = indiceFixo * cub;
+  document.getElementById('mesParcelaDisplay').value = 'R$ ' + fmt(parcelaCalculada);
+}
+
 async function enviarMes() {
   const data = document.getElementById('mesData').value;
-  const indice = document.getElementById('mesIndice').value;
   const cub = document.getElementById('mesCub').value;
-  const valorParcela = document.getElementById('mesParcela').value;
-  if (!data || !indice || !cub) { mostrarMsg('Preencha data, indice e CUB.', 'err'); return; }
-  await postAcao({ action: 'addMes', data: data, indice: indice, cub: cub, valorParcela: valorParcela });
+  if (!data || !cub) { mostrarMsg('Preencha data e valor do CUB.', 'err'); return; }
+  if (!parcelaCalculada) { mostrarMsg('Clique em Calcular antes de adicionar.', 'err'); return; }
+  await postAcao({ action: 'addMes', data: data, indice: indiceFixo, cub: cub, valorParcela: parcelaCalculada });
+  parcelaCalculada = null;
+  document.getElementById('mesParcelaDisplay').value = '';
+  document.getElementById('mesCub').value = '';
 }
 
 async function postAcao(payload) {

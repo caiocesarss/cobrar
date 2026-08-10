@@ -72,6 +72,13 @@ function pad2_(n) {
   return String(n).padStart(2, '0');
 }
 
+/** Considera "linha de mes" tanto uma Date real quanto um texto no padrao dd-Mon-aa. */
+function ehLinhaDeMes_(valorCelula, textoExibido) {
+  if (valorCelula instanceof Date) return true;
+  if (textoExibido && /^\d{1,2}[\/\-]\w+[\/\-]\d{2,4}$/.test(String(textoExibido).trim())) return true;
+  return false;
+}
+
 /**
  * Localiza o bloco do mes mais recente e retorna os dados necessarios
  * para exibir o status atual e gerar o texto de cobranca.
@@ -84,7 +91,7 @@ function calcularStatusAtual_() {
 
   let linhaMes = -1;
   for (let i = valores.length - 1; i >= 0; i--) {
-    if (valores[i][COL.DATA] instanceof Date) {
+    if (ehLinhaDeMes_(valores[i][COL.DATA], exibidos[i][COL.DATA])) {
       linhaMes = i;
       break;
     }
@@ -100,7 +107,7 @@ function calcularStatusAtual_() {
 
   let proximaLinhaMes = valores.length;
   for (let i = linhaMes + 1; i < valores.length; i++) {
-    if (valores[i][COL.DATA] instanceof Date) {
+    if (ehLinhaDeMes_(valores[i][COL.DATA], exibidos[i][COL.DATA])) {
       proximaLinhaMes = i;
       break;
     }
