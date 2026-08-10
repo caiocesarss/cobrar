@@ -280,7 +280,7 @@ async function carregarStatus() {
     html += linha('Mes', data.mesNome + ' ' + data.ano);
     html += linha('CUB', 'R$ ' + fmt(data.cub));
     html += linha('Indice', fmtIdx(data.indice));
-    html += linha('Saldo anterior', 'R$ ' + fmt(data.saldoAnterior));
+    html += linha('Saldo anterior', 'R$ ' + fmt(-data.saldoAnterior));
     html += linha('Total do mes', 'R$ ' + fmt(data.totalMes));
     html += linha('Ja pago', 'R$ ' + fmt(data.totalPago));
     html += linha('A pagar', 'R$ ' + fmt(data.aPagar), true);
@@ -394,7 +394,7 @@ function gerarTexto() {
   texto += '\n';
 
   texto += '📊 RESUMO FINANCEIRO\n';
-  texto += linhaFmt('Saldo', money(s.saldoAnterior));
+  texto += linhaFmt('Saldo', money(-s.saldoAnterior));
   texto += linhaFmt('Devido', money(s.totalMes));
   texto += '\n';
 
@@ -413,7 +413,7 @@ function gerarTexto() {
   texto += '🔴 A PAGAR\n';
   texto += money(s.aPagar) + '\n';
   texto += '```\n';
-  texto += 'Qualquer dúvida, é só chamar! 🙏';
+  texto += 'Qualquer dúvida, só chamar! 🙏';
 
   document.getElementById('receiptText').innerText = texto;
   document.getElementById('receiptWrap').classList.remove('hidden');
