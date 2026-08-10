@@ -363,10 +363,13 @@ async function postAcao(payload) {
 }
 
 // alinha "label" + "valor" em colunas fixas, tipo recibo monoespacado
-function linhaFmt(label, valor, largura) {
-  largura = largura || 18;
-  const rotulo = (label + ' ').padEnd(largura, '.');
-  return rotulo + ' ' + valor.padStart(13) + '\n';
+// moeda sem espaco entre "R$" e o numero, para o WhatsApp
+// nunca quebrar a linha bem no meio do valor
+function money(v) {
+  return 'R$' + fmt(v);
+}
+function linhaFmt(label, valor) {
+  return label + ': ' + valor + '\n';
 }
 
 function gerarTexto() {
@@ -374,39 +377,38 @@ function gerarTexto() {
   const s = statusAtual;
 
   // dentro de um bloco ``` o WhatsApp usa fonte monoespacada (Courier),
-  // mas ignora *negrito* dentro do bloco - por isso a formatacao usa
-  // alinhamento em colunas em vez de negrito.
+  // mas o bubble no celular e estreito - por isso sem colunas com pontos
+  // e sem espaco dentro do valor, so quebra entre linhas inteiras.
   let texto = '```\n';
-  texto += '📋 ATUALIZAÇÃO DA PARCELA\n';
-  texto += 'Mês de referencia: ' + s.mesNome + '/' + s.ano + '\n\n';
+  texto += '📋 ATUALIZAÇÃO DE VALORES\n';
+  texto += 'Mês: ' + s.mesNome + '/' + s.ano + '\n\n';
 
   texto += '💰 CÁLCULO DA PARCELA\n';
   texto += linhaFmt('Índice', fmtIdx(s.indice));
-  texto += linhaFmt('CUB do mÊs', 'R$ ' + fmt(s.cub));
-  texto += linhaFmt('Valor corrigido', 'R$ ' + fmt(s.mult));
+  texto += linhaFmt('CUB do mês', money(s.cub));
+  texto += linhaFmt('Corrigido', money(s.mult));
   texto += '\n';
 
   texto += '📊 RESUMO FINANCEIRO\n';
-  texto += linhaFmt('Saldo anterior', 'R$ ' + fmt(s.saldoAnterior));
-  texto += linhaFmt('Total do mes', 'R$ ' + fmt(s.totalMes));
-  texto += linhaFmt('Total devido', 'R$ ' + fmt(s.saldoAnterior + s.totalMes));
+  texto += linhaFmt('Saldo anterior', money(s.saldoAnterior));
+  texto += linhaFmt('Total devido', money(s.totalMes));
   texto += '\n';
 
   if (s.pagamentos.length) {
-    texto += '✅ PAGAMENTOS RECEBIDOS\n';
+    texto += '✅ PAGAMENTOS\n';
     let totalPago = 0;
     s.pagamentos.forEach(p => {
       const rotulo = p.dataTexto + (p.nome ? ' ' + p.nome : '');
-      texto += linhaFmt(rotulo, 'R$ ' + fmt(p.valor));
+      texto += linhaFmt(rotulo, money(p.valor));
       totalPago += Number(p.valor);
     });
-    texto += linhaFmt('Total pago', 'R$ ' + fmt(totalPago));
+    texto += linhaFmt('Total pago', money(totalPago));
     texto += '\n';
   }
 
-  texto += linhaFmt('🔴 A PAGAR', 'R$ ' + fmt(s.aPagar), 16);
+  texto += '🔴 A PAGAR: ' + money(s.aPagar) + '\n';
   texto += '```\n';
-  texto += 'Qualquer dúvida, só chamar! 🙏';
+  texto += 'Qualquer duvida, só chamar! 🙏';
 
   document.getElementById('receiptText').innerText = texto;
   document.getElementById('receiptWrap').classList.remove('hidden');
