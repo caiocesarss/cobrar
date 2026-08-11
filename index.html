@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cobranca CUB</title>
+<title>Cobrança CUB</title>
 <style>
   :root {
     --paper: #f2ede2;
@@ -169,11 +169,11 @@
 <div class="wrap">
   <header>
     <div class="eyebrow">Controle mensal</div>
-    <h1>Cobranca CUB</h1>
+    <h1>Cobrança CUB</h1>
   </header>
 
   <div class="card" id="cardStatus">
-    <h2>Status do mes atual</h2>
+    <h2>Status do mês atual</h2>
     <div id="statusBody">Carregando...</div>
   </div>
 
@@ -181,7 +181,7 @@
     <h2>Registrar</h2>
     <div class="tabs">
       <button id="tabPix" class="active">Novo PIX</button>
-      <button id="tabMes">Novo mes</button>
+      <button id="tabMes">Novo mês</button>
     </div>
 
     <div id="formPix">
@@ -195,16 +195,16 @@
     </div>
 
     <div id="formMes" class="hidden">
-      <label for="mesData">Data de referencia do mes</label>
+      <label for="mesData">Data de referência do mês</label>
       <input type="date" id="mesData">
-      <label for="mesIndiceDisplay">Indice (fixo)</label>
+      <label for="mesIndiceDisplay">Índice (fixo)</label>
       <input type="text" id="mesIndiceDisplay" readonly>
-      <label for="mesCub">Valor do CUB do mes</label>
+      <label for="mesCub">Valor do CUB do mês</label>
       <input type="number" step="0.01" id="mesCub" placeholder="3151.24">
       <button class="btn-secondary" onclick="calcularParcela()">Calcular</button>
       <label for="mesParcelaDisplay">Valor da parcela (calculado)</label>
       <input type="text" id="mesParcelaDisplay" readonly placeholder="Clique em Calcular">
-      <button class="btn-primary" onclick="enviarMes()">Adicionar mes</button>
+      <button class="btn-primary" onclick="enviarMes()">Adicionar mês</button>
     </div>
 
     <div id="msgArea"></div>
@@ -227,7 +227,7 @@
 </div>
 
 <script>
-// ==== CONFIGURACAO ====
+// ==== CONFIGURAÇÃO ====
 // Cole aqui a URL do seu Apps Script Web App (termina em /exec)
 const API_URL = "https://script.google.com/macros/s/AKfycbyoMhTgwvW_FvwwGXKg115Br-fcs4zdyf33_Xz6YI9ObGpqfO0aahWAGhO2aSIRKwo2/exec";
 
@@ -268,7 +268,7 @@ async function carregarStatus() {
     const data = await resp.json();
     if (data.erro) {
       if (data.erro.includes('Senha')) sessionStorage.removeItem('cub_senha');
-      body.innerHTML = '<div class="msg err">' + data.erro + ' Recarregue a pagina para tentar de novo.</div>';
+      body.innerHTML = '<div class="msg err">' + data.erro + ' Recarregue a página para tentar de novo.</div>';
       return;
     }
     statusAtual = data;
@@ -277,12 +277,13 @@ async function carregarStatus() {
     if (indiceDisplayEl) indiceDisplayEl.value = fmtIdx(data.indice);
 
     let html = '';
-    html += linha('Mes', data.mesNome + ' ' + data.ano);
+    html += linha('Mês', data.mesNome + ' ' + data.ano);
     html += linha('CUB', 'R$ ' + fmt(data.cub));
-    html += linha('Indice', fmtIdx(data.indice));
+    html += linha('Índice', fmtIdx(data.indice));
+    html += linha('Parcela calculada', 'R$ ' + fmt(data.mult));
     html += linha('Saldo anterior', 'R$ ' + fmt(-data.saldoAnterior));
-    html += linha('Total do mes', 'R$ ' + fmt(data.totalMes));
-    html += linha('Ja pago', 'R$ ' + fmt(data.totalPago));
+    html += linha('Total do mês', 'R$ ' + fmt(data.totalMes));
+    html += linha('Já pago', 'R$ ' + fmt(data.totalPago));
     html += linha('A pagar', 'R$ ' + fmt(data.aPagar), true);
     html += linha('Total vencido (geral)', 'R$ ' + fmt(data.totalCorrigidoGeral));
     html += linha('Total pago (geral)', 'R$ ' + fmt(data.totalTransferidoGeral));
@@ -295,7 +296,7 @@ async function carregarStatus() {
     }
     body.innerHTML = html;
   } catch (err) {
-    body.innerHTML = '<div class="msg err">Nao foi possivel carregar. Confira a URL da API.</div>';
+    body.innerHTML = '<div class="msg err">Não foi possível carregar. Confira a URL da API.</div>';
   }
 }
 
@@ -322,8 +323,8 @@ async function enviarPagamento() {
 
 function calcularParcela() {
   const cub = parseFloat(document.getElementById('mesCub').value);
-  if (!indiceFixo) { mostrarMsg('Indice ainda nao carregado. Aguarde o status carregar.', 'err'); return; }
-  if (!cub || cub <= 0) { mostrarMsg('Informe o valor do CUB do mes.', 'err'); return; }
+  if (!indiceFixo) { mostrarMsg('Índice ainda não carregado. Aguarde o status carregar.', 'err'); return; }
+  if (!cub || cub <= 0) { mostrarMsg('Informe o valor do CUB do mês.', 'err'); return; }
   parcelaCalculada = indiceFixo * cub;
   document.getElementById('mesParcelaDisplay').value = 'R$ ' + fmt(parcelaCalculada);
 }
@@ -362,13 +363,13 @@ async function postAcao(payload) {
   }
 }
 
-// formata o valor; para negativos o toLocaleString ja inclui o sinal "-"
+// formata o valor; para negativos o toLocaleString já inclui o sinal "-"
 function money(v) {
   return fmt(v);
 }
-// preenche com pontos ate uma largura fixa, sem nenhum espaco no meio
-// (label+pontos+valor vira uma unica "palavra" para o WhatsApp, entao
-// ele so quebra a linha inteira, nunca corta o valor no meio)
+// preenche com pontos até uma largura fixa, sem nenhum espaço no meio
+// (label+pontos+valor vira uma única "palavra" para o WhatsApp, então
+// ele só quebra a linha inteira, nunca corta o valor no meio)
 function linhaFmt(label, valor, largura) {
   largura = largura || 20;
   let pontos = largura - label.length - valor.length;
@@ -377,12 +378,12 @@ function linhaFmt(label, valor, largura) {
 }
 
 function gerarTexto() {
-  if (!statusAtual) { mostrarMsg('Status ainda nao carregado.', 'err'); return; }
+  if (!statusAtual) { mostrarMsg('Status ainda não carregado.', 'err'); return; }
   const s = statusAtual;
 
   // dentro de um bloco ``` o WhatsApp usa fonte monoespacada (Courier).
-  // o bubble no celular so comporta ~20 caracteres por linha sem quebrar,
-  // por isso os rotulos sao curtos e cada linha fica dentro desse limite.
+  // o bubble no celular só comporta ~20 caracteres por linha sem quebrar,
+  // por isso os rótulos são curtos e cada linha fica dentro desse limite.
   let texto = '```\n';
   texto += '📋 ATUALIZAÇÃO DE VALORES\n';
   texto += 'Mês: ' + s.mesNome + '/' + s.ano + '\n\n';
@@ -427,7 +428,7 @@ async function copiarTexto() {
     msg.textContent = 'Copiado!';
     msg.className = 'msg ok';
   } catch (err) {
-    // fallback: seleciona o texto para copia manual (funciona bem no mobile)
+    // fallback: seleciona o texto para cópia manual (funciona bem no mobile)
     const range = document.createRange();
     range.selectNode(document.getElementById('receiptText'));
     window.getSelection().removeAllRanges();
